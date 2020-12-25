@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Author: Syed Ahmar Shah
+Date: 25th December 2020
+
+Creative Commons Licence Apply
+
+## This notebook will simulate the rare disease and bayesian situation
+```{r}
+
+# let us create a function that takes disease prevalence and test accuracy as input, and outputs posterior probability of P(D|positive test)
+
+get_posterior <-function(disease_prevalence,test_accuracy){
+  
+  # get probabilities associated with disease prevalence 
+  P_D=disease_prevalence # Probability of disease
+  P_ND=1-P_D # Probability of no disease
+  
+  # get probabilities associated with test accuracy
+  P_pos_given_D=test_accuracy # probability of test positive given disease 
+  P_pos_given_ND=1-test_accuracy # probability of test negative given disease
+  P_neg_given_ND=test_accuracy # probability of test negative given no disease
+  P_neg_given_D=1-test_accuracy # probability of test negative given no disease
+
+  ## Calculate probability of test being positive
+  P_pos_total=P_pos_given_D*P_D + P_pos_given_ND*P_ND
+  
+  ## Calculate posterior, probability of disease given test is positive using Bayes rule
+  P_D_given_pos = (P_pos_given_D*P_D)/P_pos_total
+  
+  # output the result
+  return(P_D_given_pos)
+}
+
+## Plot posterior vs prevalance for a given test accuracy
+
+test_accuracy=0.98
+posterior_prevalence=data.frame(prevalence=double(),
+                                posterior=double())
+for (prevalence in seq(0.0000,1,by=0.001)){
+  print(paste('Processing Prevalence:',prevalence))
+  posterior=get_posterior(prevalence,test_accuracy)
+  new_result=data.frame(prevalence,posterior) # store the result in a new dataframe
+  posterior_prevalence<-rbind(posterior_prevalence,new_result) # append to existing dataframe
+}
+
+# let us now plot the result (posteior vs prevalence for a given test accuracy)
+posterior_prevalence$prevalence<-posterior_prevalence$prevalence*100
+library(ggplot2)
+g1<-ggplot(data=posterior_prevalence,aes(x=prevalence,y=posterior))+geom_line(size=2)+labs(title="fixed test accuracy (98%)",x="prevalence (%)", y = "posterior probability")+scale_x_continuous(breaks=seq(0,100,by=10))+theme(text = element_text(size=20))
+
+
+
+## Plot posterior vs test accuracy for a given prevalence
+
+prevalence=0.05
+posterior_accuracy=data.frame(test_accuracy=double(),
+                                posterior=double())
+for (test_accuracy in seq(0,1,by=0.01)){
+  print(paste('Processing Accuracy:',test_accuracy))
+  posterior=get_posterior(prevalence,test_accuracy)
+  new_result=data.frame(test_accuracy,posterior) # store the result in a new dataframe
+  posterior_accuracy<-rbind(posterior_accuracy,new_result) # append to existing dataframe
+}
+posterior_accuracy$test_accuracy<-posterior_accuracy$test_accuracy*100
+# let us now plot the result (posteior vs prevalence for a given test accuracy)
+g2<-ggplot(data=posterior_accuracy,aes(x=test_accuracy,y=posterior))+geom_line(size=2)+labs(title="fixed disease prevalence (5%)",x="test accuracy (%)", y = "posterior probability")+theme(text = element_text(size=20))+scale_x_continuous(breaks=seq(0,100,by=10))
+
+
+```
+
